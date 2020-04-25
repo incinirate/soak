@@ -1,0 +1,27 @@
+{
+  "name": "soak",
+  "version": "1.0.0",
+  "description": "SoakBot for switchcraft",
+  "main": "index.ts",
+  "repository": "https://github.com/incinirate/soak",
+  "author": "Emma",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --build tsconfig.json",
+    "prestart": "npm run-script build",
+    "start": "node build"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.150",
+    "@types/node": "^13.13.2",
+    "@types/ws": "^7.2.4",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "krist-utils": "^1.0.5",
+    "lodash": "^4.17.15",
+    "switchchat": "^2.0.4",
+    "ws": "^7.2.3"
+  }
+}
