@@ -22,7 +22,7 @@ kristClient.connect(kristpkey)
 const blackset = new Set(blacklist);
 kristClient.registerNameTXListener(hostname, async (tx: Krist.Transaction) => {
     const players = Array.from(switchClient.getPlayers())
-        .filter(player => !blackset.has(player.uuid));
+        .filter(player => player.name !== tx.metadata.username && !blackset.has(player.uuid));
 
     if (players.length === 0) return await tx.refund({ error: "No eligible players could be found. Is the server offline?" });
 
