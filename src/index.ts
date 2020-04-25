@@ -32,5 +32,5 @@ kristClient.registerNameTXListener(hostname, async (tx: Krist.Transaction) => {
     if (leftover > 0) await tx.refund({ message: "Amount could not be split evenly between players, here is the leftover." }, leftover);
 
     await Promise.all(players.map(player => kristClient.makeTransaction(`${player.name}@switchcraft.kst`, split, 
-        { message: `${tx.metadata.username || tx.from} donated ${split} to you through ${hostname}!` })));
+        { message: `${tx.metadata.username || tx.from} donated ${split}kst to you through ${hostname}!` })));
 });
