@@ -6,7 +6,12 @@ interface CommonMeta {
     metaname?: string;
     name?: string;
 
+    username?: string;
     recipient?: string;
+    return?: string;
+
+    message?: string;
+    error?: string;
 
     [misc: string]: string | undefined;
 }
@@ -66,12 +71,42 @@ namespace Krist {
 
     export type AddressStatus = Modify<RawAddressStatus["address"], { firstseen: Date }>
 
-    export type Transaction = Modify<RawTransaction, {
+    type TransactionData = Modify<RawTransaction, {
         time: Date;
 
         metadata: CommonMeta;
         raw_metadata: string;
     }>;
+
+    export class Transaction implements TransactionData {
+        id!: number;
+        from!: string;
+        to!: string;
+        value!: number;
+        time!: Date;
+        metadata!: CommonMeta;
+        raw_metadata!: string;
+
+        client: Client;
+
+        constructor(rtx: RawTransaction, client: Client) {
+            this.client = client;
+
+            Object.assign(this, rtx, {
+                time: new Date(rtx.time),
+
+                metadata: parseCommonMeta(rtx.metadata),
+                raw_metadata: rtx.metadata
+            });
+        }
+
+        refund(meta?: CommonMeta, partialAmt?: number) {
+            const returnLocation = this.metadata.return || this.from;
+
+            return this.client.makeTransaction(returnLocation, partialAmt || this.value,
+                Object.assign({}, meta));
+        }
+    }
 
     type TransactionHandler = (tx: Transaction) => void;
 
@@ -126,12 +161,7 @@ namespace Krist {
         registerNameTXListener(name: string, listener: TransactionHandler) {
             this.listeners.push({
                 type: "transaction", listener: (rtx: RawTransaction) => {
-                    const tx: Transaction = Object.assign(rtx, {
-                        time: new Date(rtx.time),
-
-                        metadata: parseCommonMeta(rtx.metadata),
-                        raw_metadata: rtx.metadata
-                    });
+                    const tx = new Transaction(rtx, this);
 
                     // Verify that this transaction is directed at us
                     if (tx.to !== this.currAddress?.address) return;
@@ -142,8 +172,14 @@ namespace Krist {
             });
         }
 
-        async makeTransaction(to: string, amt: number, meta: CommonMeta) {
+        makeTransaction(to: string, amt: number, meta: CommonMeta) {
+            const metastr = Object.keys(meta).map(key => `${key}=${meta[key]}`).join(";");
 
+            return this.makeAPIRequest("make_transaction", {
+                to: to,
+                amount: amt,
+                metadata: metastr
+            });
         }
 
         async refetchAddress() {
@@ -188,7 +224,6 @@ namespace Krist {
         private setupHooks() {
             this.currKWS.on("message", msg => {
                 const message = JSON.parse(msg.toString());
-                console.log("BASE", message);
 
                 switch (message.type) {
                     case "event":
